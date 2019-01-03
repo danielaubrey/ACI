@@ -1,13 +1,54 @@
 # Topology 
 
-# ACI SPINE
+# ACI 
+External Routed Networks -> Multipod
+VRF: infra/overlay1
+Enable BGP & OSPF
+OSPF Area: 0
+ Logical Node Profiles: All Spines
+ Nodes - Each Spine with loopback
+ Logical Interface Profiles: /30 Network per interface on infra vlan
+    OSPF point-to-point policy 
+  
+    
+ 
 
-# OSPF
+IPN:
 
-# Muilticast
 
 ip dhcp relay
 no ipv6 dhcp relay
+
+
+# Layer 2/3 connectivity
+!
+# Connection from IPN to SPINE
+interface Ethernet1/49.4
+  description LINK:[DEVICE NAME]
+  mtu 9150
+  encapsulation dot1q 4    
+  vrf member FABRIC_MPOD 
+  ip address [IP_ADDRESS]/30 
+  ip ospf cost 8
+  ip ospf network point-to-point
+  ip ospf mtu-ignore
+  ip router ospf a1 area 0.0.0.0
+  ip pim sparse-mode
+  ip dhcp relay address [APIC1 IP]
+  ip dhcp relay address [APIC2 IP]
+  ip dhcp relay address [APIC3 IP]
+ no shutdown
+!
+# Connection to other local IPN switch
+interface port-channel1
+  mtu 9150
+  vrf member FABRIC_MPOD
+  ip address [IP_ADDRESS]/30
+  ip ospf network point-to-point
+  ip router ospf a1 area 0.0.0.0
+  ip pim sparse-mode
+
+
 vrf context FABRIC_MPOD
   ip pim rp-address 12.1.1.2 group-list 225.0.0.0/16 bidir
   ip pim rp-address 12.1.1.2 group-list 239.255.255.240/28 bidir
@@ -15,13 +56,7 @@ vrf context FABRIC_MPOD
   ip pim ssm range 232.0.0.0/8
 
 
-interface port-channel1
-  mtu 9150
-  vrf member FABRIC_MPOD
-  ip address 10.10.0.41/30
-  ip ospf network point-to-point
-  ip router ospf a1 area 0.0.0.0
-  ip pim sparse-mode
+
 
 interface Ethernet1/1
   description LINK:SWDC2P01_eth1/1
@@ -36,21 +71,7 @@ interface Ethernet1/1
   no shutdown
 
 
-interface Ethernet1/49.4
-  description LINK:SWDC1S01
-  mtu 9150
-  encapsulation dot1q 4
-  vrf member FABRIC_MPOD
-  ip address 10.10.0.2/30
-  ip ospf cost 8
-  ip ospf network point-to-point
-  ip ospf mtu-ignore
-  ip router ospf a1 area 0.0.0.0
-  ip pim sparse-mode
-  ip dhcp relay address 10.0.0.1
-  ip dhcp relay address 10.0.0.2
-  ip dhcp relay address 10.0.0.3
-  no shutdown
+
 
 interface Ethernet1/50
   description LINK:SWDC1S02
